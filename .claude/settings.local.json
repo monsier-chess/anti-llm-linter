@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(node --test test/linter.test.js)",
+      "Bash(node -e ' *)",
+      "Bash(node /home/sadly/projects/md-linter/cli.js /tmp/test-llm.md)",
+      "Bash(chmod +x /home/sadly/projects/md-linter/cli.js)",
+      "Bash(node cli.js examples/lecture.md)"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "md-linter",
+  "version": "1.0.0",
+  "description": "Линтер LLM-антипаттернов в русскоязычных текстах",
+  "type": "module",
+  "bin": { "md-linter": "./cli.js" },
+  "scripts": {
+    "test": "node --test test/linter.test.js",
+    "lint": "node cli.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0"
+  }
+}
