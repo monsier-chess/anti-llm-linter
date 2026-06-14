@@ -1,22 +1,25 @@
 #!/usr/bin/env node
 import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 import { rules as baseRules } from './src/rules.js';
 import { lint, applyConfig } from './src/linter.js';
 import { report, summary } from './src/reporter.js';
+import { readAsText, SUPPORTED_EXTENSIONS } from './src/reader.js';
 
 const args = process.argv.slice(2);
 if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
   console.log(`
-  md-linter — линтер LLM-антипаттернов
+  anti-llm-linter — линтер LLM-антипаттернов
 
   Использование:
-    md-linter <файл> [файл...]
-    cat file.md | md-linter -
+    anti-llm-linter <файл> [файл...]
+    cat file.md | anti-llm-linter -
+
+  Поддерживаемые форматы:
+    ${SUPPORTED_EXTENSIONS.join(', ')}
 
   Конфигурация:
-    Создайте md-linter.config.json в рабочей директории:
+    Создайте anti-llm-linter.config.json в рабочей директории:
     {
       "extendRules": {
         "anglicisms": [{ "regex": "/\\\\bоупенсорс[а-яё]*/gi", "message": "..." }]
@@ -30,13 +33,13 @@ if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
 
 // Load optional config
 let rules = baseRules;
-const configPath = resolve(process.cwd(), 'md-linter.config.json');
+const configPath = resolve(process.cwd(), 'anti-llm-linter.config.json');
 if (existsSync(configPath)) {
   try {
     const cfg = JSON.parse(readFileSync(configPath, 'utf-8'));
     rules = applyConfig(baseRules, cfg);
   } catch (e) {
-    console.error(`Ошибка в md-linter.config.json: ${e.message}`);
+    console.error(`Ошибка в anti-llm-linter.config.json: ${e.message}`);
     process.exit(1);
   }
 }
@@ -47,7 +50,6 @@ let fileCount = 0;
 for (const arg of args) {
   let text, filePath;
   if (arg === '-') {
-    // stdin
     filePath = '<stdin>';
     text = readFileSync('/dev/stdin', 'utf-8');
   } else {
@@ -56,7 +58,12 @@ for (const arg of args) {
       console.error(`Файл не найден: ${filePath}`);
       process.exit(1);
     }
-    text = readFileSync(filePath, 'utf-8');
+    try {
+      text = await readAsText(filePath);
+    } catch (e) {
+      console.error(`Не удалось прочитать ${filePath}: ${e.message}`);
+      process.exit(1);
+    }
   }
 
   const findings = lint(text, rules);

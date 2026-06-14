@@ -23,7 +23,7 @@ CLI-линтер для обнаружения LLM-антипаттернов в
 
 Вывод линтера:
 
-![Пример вывода md-linter](examples/output.png)
+![Пример вывода anti-llm-linter](examples/output.png)
 
 ### Установка
 
@@ -36,16 +36,30 @@ npm install
 ```bash
 # Проверка одного или нескольких файлов
 node cli.js file.md
-node cli.js path/to/a.md path/to/b.md
+node cli.js report.pdf doc.docx article.html
 
 # Чтение из stdin
 cat file.md | node cli.js -
 
 # При глобальной установке
-md-linter file.md
+anti-llm-linter file.md
 ```
 
 Код выхода `1`, если найдена хотя бы одна ошибка (`error`), `0` — если всё чисто.
+
+### Поддерживаемые форматы
+
+| Формат | Расширения |
+|---|---|
+| Markdown | `.md` |
+| Обычный текст | `.txt`, `.text` |
+| reStructuredText | `.rst` |
+| AsciiDoc | `.adoc`, `.asciidoc` |
+| HTML | `.html`, `.htm` |
+| PDF | `.pdf` |
+| Word | `.docx` |
+
+Для PDF и DOCX из документа извлекается только текст; форматирование игнорируется.
 
 ### Правила
 
@@ -70,7 +84,7 @@ md-linter file.md
 
 ### Конфигурация
 
-Создайте файл `md-linter.config.json` в рабочей директории:
+Создайте файл `anti-llm-linter.config.json` в рабочей директории:
 
 ```json
 {
