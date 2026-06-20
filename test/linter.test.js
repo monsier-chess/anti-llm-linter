@@ -130,6 +130,27 @@ describe('anglicisms', () => {
     assert.ok(hits('Кастомизированный интерфейс.', 'anglicisms'));
     assert.ok(hits('Деплоить нужно осторожно.', 'anglicisms'));
   });
+
+  it('short anglicism stems still catch their real forms', () => {
+    assert.ok(hits('Загляни в лог.', 'anglicisms'));        // лог → журнал
+    assert.ok(hits('Проверь логи сервера.', 'anglicisms')); // логи
+    assert.ok(hits('Возьми таск из бэклога.', 'anglicisms')); // таск
+    assert.ok(hits('Это хороший лид.', 'anglicisms'));      // лид
+    assert.ok(hits('Напиши мок для теста.', 'anglicisms')); // мок
+    assert.ok(hits('Это просто стаб.', 'anglicisms'));      // стаб
+  });
+
+  it('does NOT match common Russian words sharing a prefix (no greedy stems)', () => {
+    assert.ok(clean('Логика работы понятна.', 'anglicisms'));     // лог∉логика
+    assert.ok(clean('У нас своя логистика.', 'anglicisms'));      // лог∉логистика
+    assert.ok(clean('Введите логин и пароль.', 'anglicisms'));    // лог∉логин
+    assert.ok(clean('Это вполне логично.', 'anglicisms'));        // лог∉логично
+    assert.ok(clean('Лидер команды ушёл.', 'anglicisms'));        // лид∉лидер
+    assert.ok(clean('Стабильный код важен.', 'anglicisms'));      // стаб∉стабильный
+    assert.ok(clean('Не нужно таскать коробки.', 'anglicisms'));  // таск∉таскать
+    assert.ok(clean('Мокрый асфальт на дороге.', 'anglicisms'));  // мок∉мокрый
+    assert.ok(clean('Большой каталог товаров.', 'anglicisms'));   // лог∉каталог
+  });
 });
 
 // ─────────────────────────────────────────

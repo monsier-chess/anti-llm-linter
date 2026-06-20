@@ -116,6 +116,22 @@ function indexToPos(text, index) {
   return { line, col };
 }
 
+/**
+ * Inverse of indexToPos: convert 1-based {line, col} back to a character offset.
+ * @param {string} text
+ * @param {number} line 1-based
+ * @param {number} col 1-based
+ * @returns {number}
+ */
+export function posToIndex(text, line, col) {
+  const lines = text.split('\n');
+  let offset = 0;
+  for (let i = 0; i < line - 1; i++) {
+    offset += (lines[i]?.length ?? 0) + 1; // +1 for the '\n'
+  }
+  return offset + col - 1;
+}
+
 function parseRegexLiteral(str) {
   const m = str.match(/^\/(.+)\/([gimsuy]*)$/);
   if (m) return new RegExp(m[1], m[2]);

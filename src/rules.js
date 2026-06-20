@@ -18,6 +18,14 @@ function r(src, flags = 'gi') {
   return new RegExp(src, flags);
 }
 
+// Strict noun match — only explicit Russian case endings, NOT a greedy [а-яё]*.
+// Prevents short anglicism stems from gobbling unrelated longer words:
+//   лог → логика/логин/логистика, стаб → стабильный, лид → лидер, таск → таскать.
+const NOUN_ENDINGS = '(?:а|у|е|ом|ы|и|ов|ам|ами|ах|ью|ей)?';
+function rn(stem, flags = 'gi') {
+  return new RegExp(`${RB}${stem}${NOUN_ENDINGS}${RE}`, flags);
+}
+
 export const rules = [
 
   // ─────────────────────────────────────────────────
@@ -124,21 +132,21 @@ export const rules = [
       { regex: rp(`эскалир${RL}+`), message: 'эскалировать → передавать на следующий уровень' },
 
       // Существительные — разработка
-      { regex: rw(`таск${RL}*`), message: 'таск → задача' },
+      { regex: rn('таск'), message: 'таск → задача' },
       { regex: rw(`тикет${RL}*`), message: 'тикет → заявка/задача' },
       { regex: rw(`коммит${RL}*`), message: 'коммит → изменение' },
       { regex: rw(`мердж${RL}*`), message: 'мердж → объединение' },
       { regex: rw(`пуллреквест${RL}*`), message: 'pull request → запрос на слияние' },
       { regex: rw(`пул-реквест${RL}*`), message: 'pull request → запрос на слияние' },
       { regex: rw(`репозитор${RL}+`), message: 'репозиторий → хранилище кода' },
-      { regex: rw(`форк${RL}*`), message: 'форк → ответвление' },
+      { regex: rn('форк'), message: 'форк → ответвление' },
       { regex: rw(`бранч${RL}*`), message: 'бранч → ветка' },
       { regex: rw(`хотфикс${RL}*`), message: 'hotfix → срочное исправление' },
       { regex: rw(`билд${RL}*`), message: 'билд → сборка' },
       { regex: rw(`рантайм${RL}*`), message: 'runtime → среда выполнения' },
-      { regex: rw(`лог${RL}*`), message: 'лог → журнал' },
-      { regex: rw(`мок${RL}*`), message: 'mock → заглушка' },
-      { regex: rw(`стаб${RL}*`), message: 'stub → заглушка' },
+      { regex: rn('лог'), message: 'лог → журнал' },
+      { regex: rn('мок'), message: 'mock → заглушка' },
+      { regex: rn('стаб'), message: 'stub → заглушка' },
 
       // Продуктовая и бизнес-лексика
       { regex: rw(`роадмап${RL}*`), message: 'роадмап → план развития' },
@@ -156,7 +164,7 @@ export const rules = [
 
       // Маркетинг и продукт
       { regex: rw(`таргет${RL}*`), message: 'таргет → целевая аудитория/цель' },
-      { regex: rw(`лид${RL}*`), message: 'лид → потенциальный клиент' },
+      { regex: rn('лид'), message: 'лид → потенциальный клиент' },
       { regex: rw(`конверси${RL}+`), message: 'конверсия → доля успешных переходов' },
       { regex: rw(`аутрич${RL}*`), message: 'outreach → привлечение контактов' },
       { regex: rw(`евангелист${RL}*`), message: 'евангелист → популяризатор' },
@@ -503,3 +511,35 @@ export const rules = [
   },
 
 ];
+
+/**
+ * How each rule is meant to be fixed — drives the content-preservation guard:
+ *
+ *   'remove'   — the flagged phrase (and usually its whole sentence/clause) is
+ *                fluff and SHOULD be deleted. Large shrink is legitimate here.
+ *   'rephrase' — the flagged span carries meaning and must be rewritten in
+ *                place (anglicism → русское слово, "не X, а Y" → прямое
+ *                утверждение). Length stays roughly the same; big shrink means
+ *                the model destroyed content.
+ *
+ * Rules not listed default to 'rephrase' (the content-preserving, safe choice),
+ * so user-added custom rules are protected by default.
+ */
+export const FIX_TYPES = {
+  emoji: 'remove',
+  arrows: 'remove',
+  checkmarks: 'remove',
+  anglicisms: 'rephrase',
+  'verbalization-announce': 'remove',
+  'verbalization-pointer': 'remove',
+  'request-paraphrase': 'remove',
+  'self-praise': 'remove',
+  enthusiasm: 'remove',
+  'significance-exaggeration': 'rephrase',
+  'contrast-a': 'rephrase',
+  'concept-repackaging': 'rephrase',
+  'correcting-user': 'remove',
+  'stating-obvious': 'remove',
+  'text-inflation': 'remove',
+  'end-offers': 'remove',
+};
