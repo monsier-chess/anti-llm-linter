@@ -170,9 +170,3 @@ node cli.js --fix --fix-provider lmstudio --fix-model qwen2.5:7b file.md
 **Пример:** автоматическое редактирование [`examples/sample2.md`](examples/sample2.md) моделью Gemma 4 26B A4B, результат — [`examples/sample2-fixed.md`](examples/sample2-fixed.md):
 
 ![Текст до и после редактирования](assets/fixed-text-side-by-side.png)
-
----
-
-### Вывод
-
-Для каждой находки выводятся: уровень серьёзности, ID правила, строка/столбец, найденный фрагмент и контекст вокруг него с указателями на место совпадения. После проверки всех файлов печатается итоговая сводка.
