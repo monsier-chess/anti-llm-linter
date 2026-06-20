@@ -7,7 +7,8 @@
     "anti-llm-linter": "./cli.js"
   },
   "scripts": {
-    "test": "node --test test/linter.test.js",
+    "test": "node --test test/linter.test.js test/document-model.test.js test/adapters.test.js test/docx-adapter.test.js test/segmenter.test.js test/providers.test.js test/fixer.test.js test/integration.test.js test/quality.test.js",
+    "test:ollama": "node --test test/ollama-integration.test.js",
     "lint": "node cli.js"
   },
   "dependencies": {

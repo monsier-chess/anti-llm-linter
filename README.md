@@ -23,7 +23,9 @@ CLI-линтер для обнаружения LLM-антипаттернов в
 
 Вывод линтера:
 
-![Пример вывода anti-llm-linter](examples/output.png)
+![Пример вывода anti-llm-linter](assets/output.png)
+
+---
 
 ### Установка
 
@@ -61,6 +63,8 @@ anti-llm-linter file.md
 
 Для PDF и DOCX из документа извлекается только текст; форматирование игнорируется.
 
+---
+
 ### Правила
 
 | ID правила | Уровень | Описание |
@@ -81,6 +85,8 @@ anti-llm-linter file.md
 | `stating-obvious` | warning | Проговаривание очевидного ("как всем известно", "важно понимать") |
 | `text-inflation` | warning | Фразы-паразиты ("таким образом,", "подводя итог", "следует отметить") |
 | `end-offers` | error | Навязчивые предложения в конце ("если есть вопросы", "готов помочь") |
+
+---
 
 ### Конфигурация
 
@@ -110,6 +116,62 @@ anti-llm-linter file.md
 - **`extendRules`** — добавить паттерны к существующему встроенному правилу.
 - **`addRules`** — добавить полностью новые правила.
 - **`disableRules`** — отключить встроенные правила по ID.
+
+---
+
+### Автоисправление (`--fix`)
+
+Режим `--fix` отправляет фрагменты текста в локальный или облачный LLM и применяет исправления обратно в файл — аналог `eslint --fix`.
+
+```bash
+# Исправить файл (Ollama, модель по умолчанию)
+node cli.js --fix examples/sample2.md
+
+# Посмотреть изменения без записи
+node cli.js --fix --fix-dry-run examples/sample2.md
+
+# Указать конкретную модель
+node cli.js --fix --fix-provider ollama --fix-model gemma4:27b examples/sample2.md
+
+# Через OpenAI API
+node cli.js --fix --fix-provider openai --fix-model gpt-4o --fix-api-key sk-... file.md
+
+# Через LM Studio (локальный OpenAI-совместимый сервер)
+node cli.js --fix --fix-provider lmstudio --fix-model qwen2.5:7b file.md
+```
+
+**Флаги:**
+
+| Флаг | По умолчанию | Описание |
+|---|---|---|
+| `--fix` | — | Включить режим автоисправления |
+| `--fix-dry-run` | — | Показать diff без записи в файл |
+| `--fix-provider` | `ollama` | Провайдер: `ollama`, `openai`, `anthropic`, `lmstudio`, `openrouter` |
+| `--fix-model` | `llama3` | Имя модели |
+| `--fix-base-url` | — | Переопределить endpoint провайдера |
+| `--fix-api-key` | — | API-ключ (или переменная `ANTI_LLM_FIX_API_KEY`) |
+| `--fix-max-passes` | `5` | Максимум итераций (линтер перепроверяет после каждой) |
+| `--fix-max-chars` | `1000` | Максимум символов в одном запросе к модели |
+
+Перед записью создаётся резервная копия `file.bak`. PDF-файлы пропускаются с предупреждением.
+
+**Секция в конфиг-файле:**
+
+```json
+{
+  "autofix": {
+    "provider": "ollama",
+    "model": "qwen2.5:3b",
+    "maxPasses": 3
+  }
+}
+```
+
+**Пример:** автоматическое редактирование [`examples/sample2.md`](examples/sample2.md) моделью Gemma 4 26B A4B, результат — [`examples/sample2-fixed.md`](examples/sample2-fixed.md):
+
+![Текст до и после редактирования](assets/fixed-text-side-by-side.png)
+
+---
 
 ### Вывод
 

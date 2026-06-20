@@ -2,6 +2,7 @@ import { lint } from '../linter.js';
 import { FIX_TYPES } from '../rules.js';
 import { segment as splitIntoSubsegs } from '../segmentation/Segmenter.js';
 import { buildPrompt, parseResponse } from './prompt.js';
+import { looksDegenerate } from './quality.js';
 
 /**
  * @typedef {{
@@ -113,6 +114,12 @@ async function processSegment({ docSeg, segFindings, model, rules, provider, max
     if (replacement === null) continue;
     replacement = preserveLeadingMarker(sub.text, replacement);
 
+    const degen = looksDegenerate(sub.text, replacement);
+    if (degen) {
+      onProgress({ pass, warning: `Sub-segment rejected: ${degen}` });
+      continue;
+    }
+
     const newFindings = lint(replacement, rules);
     if (newFindings.length >= subFindings.length) {
       onProgress({ pass, warning: `Sub-segment not improved (${subFindings.length} → ${newFindings.length})` });
@@ -164,6 +171,13 @@ async function callLLM(provider, text, findings, onProgress, pass) {
  */
 function applyIfBetter(model, segId, currentText, replacement, originalFindings, rules, onProgress, pass, pristineText, pristineFindings) {
   const originalCount = originalFindings.length;
+  // Degeneration guard: repetition loops, leaked tokens, duplicated sentences.
+  // These pass the lint check but are factually broken.
+  const degen = looksDegenerate(currentText, replacement);
+  if (degen) {
+    onProgress({ pass, warning: `Skipped segment ${segId}: ${degen}` });
+    return false;
+  }
   const newFindings = lint(replacement, rules);
   if (newFindings.length >= originalCount) {
     onProgress({ pass, warning: `Skipped segment ${segId}: ${originalCount} → ${newFindings.length} violations` });

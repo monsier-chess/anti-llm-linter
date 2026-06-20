@@ -15,7 +15,8 @@ const REPLACEMENT_SCHEMA = {
  */
 export class OllamaProvider {
   /**
-   * @param {{ model?: string, baseURL?: string, timeoutMs?: number, format?: any }} [opts]
+   * @param {{ model?: string, baseURL?: string, timeoutMs?: number, format?: any,
+   *   think?: boolean, repeatPenalty?: number, numPredict?: number }} [opts]
    */
   constructor(opts = {}) {
     this.model = opts.model ?? 'llama3';
@@ -24,6 +25,14 @@ export class OllamaProvider {
     // Constrain output to the replacementText schema by default.
     // Pass format: null explicitly to disable.
     this.format = opts.format === undefined ? REPLACEMENT_SCHEMA : opts.format;
+    // Disable thinking by default — the fix task wants a direct edit, and
+    // reasoning modes leak channel/template tokens (<channel|>, <think>) into
+    // the output of small models. Ignored by non-thinking models.
+    this.think = opts.think ?? false;
+    // repeat_penalty fights the repetition-loop degeneration ("слово слово слово…").
+    this.repeatPenalty = opts.repeatPenalty ?? 1.3;
+    // Cap generation length to stop runaway loops (≈ a generous edit budget).
+    this.numPredict = opts.numPredict ?? 2048;
   }
 
   /**
@@ -36,8 +45,12 @@ export class OllamaProvider {
       model: this.model,
       prompt,
       stream: false,
-      // temperature 0 for deterministic, focused edits
-      options: { temperature: 0 },
+      think: this.think,
+      options: {
+        temperature: 0, // deterministic, focused edits
+        repeat_penalty: this.repeatPenalty,
+        num_predict: this.numPredict,
+      },
     };
     if (this.format) body.format = this.format;
 
